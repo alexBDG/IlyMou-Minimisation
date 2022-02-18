@@ -11,13 +11,12 @@ from hyperopt.pyll import scope
 
 # OD modules
 from MM.init_param import init
-# from MM.param_approx_a import param_approx_a as param_approx
-from MM.param_approx_a import param_approx_a_opti as param_approx
-#from MM.param_approx_b import param_approx_b as param_approx
-# from MM.param_approx_b import param_approx_b_opti as param_approx
+from MM.error import error_a_opti as error
+#from MM.error import error_b_opti as error
 
 # Figures modules
-from MM.display import main_plot_history, main_plot_histogram, main_plot_vars
+from MM.display import main_plot_history, main_plot_histogram, main_plot_vars, main_plot_Bode_a
+from MM.display import main_plot_Bode_a as main_plot_Bode
 
 
 def get_search_space(f_min=1e-4, f_max=1e4, Ns=10):
@@ -52,19 +51,15 @@ def get_search_space(f_min=1e-4, f_max=1e4, Ns=10):
     >>> 'arg4': hp.loguniform('arg4', np.log(1e-5), np.log(1e-1))
     """
 
-    space_rk = {
-        'r_{}'.format(i): 0.1*hp.loguniform(
-            'r_{}'.format(i), np.log(f_min), np.log(f_max)
-        )
-        for i in range(Ns)
-    }
+    space_rk = {'r_{}'.format(i):
+                0.1*hp.loguniform('r_{}'.format(i),
+                                  np.log(f_min), np.log(f_max))
+                for i in range(Ns)}
 
-    space_sk = {
-        's_{}'.format(i): -hp.loguniform(
-            's_{}'.format(i), np.log(f_min), np.log(f_max)
-        )
-        for i in range(Ns)
-    }
+    space_sk = {'s_{}'.format(i):
+                -hp.loguniform('s_{}'.format(i),
+                               np.log(f_min), np.log(f_max))
+                for i in range(Ns)}
 
     # Concatenate this spaces
     space = {**space_rk, **space_sk}
@@ -81,7 +76,7 @@ def optimize(f_opti, space, max_evals=100, case=0, f_min=1e-4, f_max=1e4,
     param_th = [ainf, M, N, L]
 
     # range of frequencies
-    freq = np.logspace(np.log10(f_min), np.log10(f_min), Nf)
+    freq = np.logspace(np.log10(f_min), np.log10(f_max), Nf)
 
     # Get approximation function
     f = f_opti(param_th=param_th, freq=freq)
@@ -94,7 +89,7 @@ def optimize(f_opti, space, max_evals=100, case=0, f_min=1e-4, f_max=1e4,
 
         # Main part - evaluation
         try:
-            loss = f(param=[rk, sk])
+            loss = f(mm_param=[rk, sk])
             status = STATUS_OK
         except Exception as e:
             traceback.print_exception(type(e), e, e.__traceback__)
@@ -104,10 +99,8 @@ def optimize(f_opti, space, max_evals=100, case=0, f_min=1e-4, f_max=1e4,
         return {'loss': loss, 'status': status}
 
     trials = Trials()
-    best = fmin(
-        objective, space, algo=tpe.suggest, max_evals=max_evals, trials=trials,
-        rstate=np.random.RandomState(0)
-    )
+    best = fmin(objective, space, algo=tpe.suggest, max_evals=max_evals,
+                trials=trials, rstate=np.random.RandomState(0))
 
     return space_eval(space, best), trials
 
@@ -120,7 +113,7 @@ if __name__ == "__main__":
     f_min, f_max = [1e1,1e7]
 
     # Number of iterrations
-    max_evals = 1e4
+    max_evals = 5e3
 
     # Logs
     print("", '#'*80, '#{:^78}#'.format("Starting"), '#'*80, "", sep='\n')
@@ -128,7 +121,7 @@ if __name__ == "__main__":
 
     # Run
     args, trials = optimize(
-        f_opti    = param_approx,
+        f_opti    = error,
         space     = get_search_space(f_min=f_min, f_max=f_max, Ns=Ns),
         max_evals = max_evals,
         case      = 0,
@@ -138,6 +131,10 @@ if __name__ == "__main__":
         Ns        = Ns,
     )
 
+    # mm_param
+    rk = []
+    sk = []
+
     # Logs
     print("", '#'*80, '#{:^78}#'.format("End"), '#'+'='*78+"#", sep='\n')
     msg = "Elapsed time: {:.3f} s".format(time.time()-start)
@@ -145,6 +142,8 @@ if __name__ == "__main__":
     print('#{:^78}#'.format("Best parameters"))
     for key, value in args.items():
         msg = "{}: {}".format(key, value)
+        if value > 0: rk.append(value)
+        if value < 0: sk.append(value)
         print('#  - {:<74} #'.format(msg))
     msg = "{}: {:.3E}".format("Best error", trials.average_best_error())
     print('#'+'='*78+"#", '#{:^78}#'.format(msg), '#'*80, sep='\n')
@@ -158,3 +157,11 @@ if __name__ == "__main__":
         arrange_by_loss = False,
         space           = get_search_space(f_min=f_min, f_max=f_max, Ns=Ns)
     )
+
+    # Additional plot
+    M, N, L, Mp, Np, Lp, ainf, gam = init(case=0)
+    phy_param_a = [ainf, M, N, L]
+    phy_param_b = [gam, Mp, Np, Lp]
+    mm_param = [rk,sk]
+    fr_param = [f_min,f_max, Nf]
+    main_plot_Bode(mm_param, phy_param_a, fr_param)

@@ -32,7 +32,7 @@ def main_plot_history(trials, title="Loss History", directory=None,
     Ys, colors = zip(
         *[
             (y, status_colors[s])
-            for y, s in zip(trials.losses(), 
+            for y, s in zip(trials.losses(),
                             trials.statuses())
             if y is not None
         ]
@@ -82,8 +82,8 @@ def main_plot_histogram(trials, title="Loss Histogram", directory=None,
     Xs, Ys, Ss, Cs = zip(
         *[
             (x, y, s, status_colors[s])
-            for (x, y, s) in zip(trials.specs, 
-                                 trials.losses(), 
+            for (x, y, s) in zip(trials.specs,
+                                 trials.losses(),
                                  trials.statuses())
             if y is not None
         ]
@@ -189,11 +189,11 @@ def main_plot_vars(trials, fontsize=10, columns=5, arrange_by_loss=False,
 
     if space is not None:
         samples = [
-            f_unpack_dict(f_wrap_space_eval(space, x)) 
+            f_unpack_dict(f_wrap_space_eval(space, x))
             for x in trials.trials
         ]
         samples = [
-            {key: [sample[key] for sample in samples]} 
+            {key: [sample[key] for sample in samples]}
             for key in samples[0].keys()
         ]
         dict_samples = {}
@@ -277,8 +277,8 @@ def main_plot_vars(trials, fontsize=10, columns=5, arrange_by_loss=False,
     # Plot legend
     ax = plt.subplot(n_row, n_col, plotnum + 2, frameon=False)
     ax.tick_params(
-        labelbottom=False, labeltop=False, labelleft=False, 
-        labelright=False, labelcolor='none', top=False, 
+        labelbottom=False, labeltop=False, labelleft=False,
+        labelright=False, labelcolor='none', top=False,
         bottom=False, left=False, right=False
     )
     # ax.set_xscale('log')
@@ -302,3 +302,43 @@ def main_plot_vars(trials, fontsize=10, columns=5, arrange_by_loss=False,
         plt.close(fig)
     else:
         plt.show()
+
+def main_plot_Bode_a(mm_param, phy_param, freq_param, title="Bode Diagram"):
+    ainf, M, N, L = phy_param
+    f_min, f_max, nf = freq_param
+    freq = np.logspace(np.log10(f_min), np.log10(f_max), nf)
+    jom = 2 * np.pi * 1j * freq
+
+    th = np.zeros(nf,dtype=complex)
+    for i in range(nf):
+        th[i] = ainf * (1 + M / jom[i] + N * (np.sqrt(1 + jom[i] / L) - 1) / jom[i])
+
+    optim_val = np.zeros(nf)
+    for i in range(nf):
+        optim_val += ainf
+        optim_val += ainf * M  / jom
+        for k in range(len(mm_param[0])): optim_val += mm_param[0][k] / (jom - mm_param[1][k])
+
+    plt.grid()
+    plt.plot(freq,th,c='black',label="Reference")
+    plt.plot(freq,optim_val,'r--',label="Optimized")
+
+def main_plot_Bode_b(mm_param, phy_param, freq_param, title="Bode Diagram"):
+    gam, Mp, Np, Lp = phy_param
+    f_min, f_max, nf = freq_param
+    freq = np.logspace(np.log10(f_min), np.log10(f_max), nf)
+    jom = 2 * np.pi * 1j * freq
+
+    th = np.zeros(nf,dtype=complex)
+    for i in range(nf):
+        th[i] = gam - (gam - 1) / (1 + Mp / jom[i] + Np * (np.sqrt(1 + jom[i]/Lp) - 1) / jom[i])
+
+    optim_val = np.zeros(nf)
+    for i in range(nf):
+        optim_val += 1
+        for k in range(len(mm_param[0])): optim_val += mm_param[0][k] / (jom - mm_param[1][k])
+
+    plt.grid()
+    plt.plot(freq,th,c='black',label="Reference")
+    plt.plot(freq,optim_val,'r--',label="Optimized")
+
