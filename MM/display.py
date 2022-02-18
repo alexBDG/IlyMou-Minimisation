@@ -303,7 +303,7 @@ def main_plot_vars(trials, fontsize=10, columns=5, arrange_by_loss=False,
     else:
         plt.show()
 
-def main_plot_Bode_a(mm_param, phy_param, freq_param, title="Bode Diagram"):
+def main_plot_Bode_a(mm_param, phy_param, freq_param, title=r"$\alpha$ Bode Diagram"):
     ainf, M, N, L = phy_param
     f_min, f_max, nf = freq_param
     freq = np.logspace(np.log10(f_min), np.log10(f_max), nf)
@@ -313,17 +313,58 @@ def main_plot_Bode_a(mm_param, phy_param, freq_param, title="Bode Diagram"):
     for i in range(nf):
         th[i] = ainf * (1 + M / jom[i] + N * (np.sqrt(1 + jom[i] / L) - 1) / jom[i])
 
-    optim_val = np.zeros(nf)
+    optim_val = np.zeros(nf,dtype=complex)
+    optim_val += ainf
+    optim_val += ainf * M  / jom
+    for k in range(len(mm_param[0])): optim_val += mm_param[0][k] / (jom - mm_param[1][k])
+
+    fig, axs = plt.subplots(2)
+    fig.suptitle(title)
+    axs[0].plot(freq,np.abs(th),c='black',label="Reference")
+    axs[0].plot(freq,np.abs(optim_val),'r--',label="Optimized")
+    axs[0].set_xscale('log')
+    axs[0].set_ylabel('Magnitude')
+    axs[0].grid()
+    axs[0].legend()
+    axs[1].plot(freq,180*np.angle(th)/np.pi,c='black',label="Reference")
+    axs[1].plot(freq,180*np.angle(optim_val)/np.pi,'r--',label="Optimized")
+    axs[1].set_xscale('log')
+    axs[1].set_xlabel('Frequency [Hz]')
+    axs[1].set_ylabel('Phase')
+    axs[1].grid()
+    axs[1].legend()
+
+def main_plot_a(mm_param, phy_param, freq_param, title=r"$\alpha$"):
+    ainf, M, N, L = phy_param
+    f_min, f_max, nf = freq_param
+    freq = np.logspace(np.log10(f_min), np.log10(f_max), nf)
+    jom = 2 * np.pi * 1j * freq
+
+    th = np.zeros(nf,dtype=complex)
     for i in range(nf):
-        optim_val += ainf
-        optim_val += ainf * M  / jom
-        for k in range(len(mm_param[0])): optim_val += mm_param[0][k] / (jom - mm_param[1][k])
+        th[i] = ainf * (1 + M / jom[i] + N * (np.sqrt(1 + jom[i] / L) - 1) / jom[i])
 
-    plt.grid()
-    plt.plot(freq,th,c='black',label="Reference")
-    plt.plot(freq,optim_val,'r--',label="Optimized")
+    optim_val = np.zeros(nf,dtype=complex)
+    optim_val += ainf
+    optim_val += ainf * M  / jom
+    for k in range(len(mm_param[0])): optim_val += mm_param[0][k] / (jom - mm_param[1][k])
 
-def main_plot_Bode_b(mm_param, phy_param, freq_param, title="Bode Diagram"):
+    fig, axs = plt.subplots(2)
+    axs[0].plot(freq,np.real(th),c='black',label="Reference")
+    axs[0].plot(freq,np.real(optim_val),'r--',label="Optimized")
+    axs[0].set_xscale('log')
+    axs[0].set_ylabel(r"Real($\alpha$)")
+    axs[0].grid()
+    axs[0].legend()
+    axs[1].plot(freq,np.imag(th),c='black',label="Reference")
+    axs[1].plot(freq,np.imag(optim_val),'r--',label="Optimized")
+    axs[1].set_xscale('log')
+    axs[1].set_xlabel('Frequency [Hz]')
+    axs[1].set_ylabel(r"Imag($\alpha$)")
+    axs[1].grid()
+    axs[1].legend()
+
+def main_plot_Bode_b(mm_param, phy_param, freq_param, title=r"$\beta$ Bode Diagram"):
     gam, Mp, Np, Lp = phy_param
     f_min, f_max, nf = freq_param
     freq = np.logspace(np.log10(f_min), np.log10(f_max), nf)
@@ -333,12 +374,52 @@ def main_plot_Bode_b(mm_param, phy_param, freq_param, title="Bode Diagram"):
     for i in range(nf):
         th[i] = gam - (gam - 1) / (1 + Mp / jom[i] + Np * (np.sqrt(1 + jom[i]/Lp) - 1) / jom[i])
 
-    optim_val = np.zeros(nf)
-    for i in range(nf):
-        optim_val += 1
-        for k in range(len(mm_param[0])): optim_val += mm_param[0][k] / (jom - mm_param[1][k])
+    optim_val = np.zeros(nf,dtype=complex)
+    optim_val += 1
+    for k in range(len(mm_param[0])): optim_val += mm_param[0][k] / (jom - mm_param[1][k])
 
-    plt.grid()
-    plt.plot(freq,th,c='black',label="Reference")
-    plt.plot(freq,optim_val,'r--',label="Optimized")
+    fig, axs = plt.subplots(2)
+    fig.suptitle(title)
+    axs[0].plot(freq,np.abs(th),c='black',label="Reference")
+    axs[0].plot(freq,np.abs(optim_val),'r--',label="Optimized")
+    axs[0].set_xscale('log')
+    axs[0].set_ylabel('Magnitude')
+    axs[0].grid()
+    axs[0].legend()
+    axs[1].plot(freq,180*np.angle(th)/np.pi,c='black',label="Reference")
+    axs[1].plot(freq,180*np.angle(optim_val)/np.pi,'r--',label="Optimized")
+    axs[1].set_xscale('log')
+    axs[1].set_xlabel('Frequency [Hz]')
+    axs[1].set_ylabel('Phase')
+    axs[1].grid()
+    axs[1].legend()
+
+def main_plot_b(mm_param, phy_param, freq_param, title=r"$\beta$"):
+    gam, Mp, Np, Lp = phy_param
+    f_min, f_max, nf = freq_param
+    freq = np.logspace(np.log10(f_min), np.log10(f_max), nf)
+    jom = 2 * np.pi * 1j * freq
+
+    th = np.zeros(nf,dtype=complex)
+    for i in range(nf):
+        th[i] = gam - (gam - 1) / (1 + Mp / jom[i] + Np * (np.sqrt(1 + jom[i]/Lp) - 1) / jom[i])
+
+    optim_val = np.zeros(nf,dtype=complex)
+    optim_val += 1
+    for k in range(len(mm_param[0])): optim_val += mm_param[0][k] / (jom - mm_param[1][k])
+
+    fig, axs = plt.subplots(2)
+    axs[0].plot(freq,np.real(th),c='black',label="Reference")
+    axs[0].plot(freq,np.real(optim_val),'r--',label="Optimized")
+    axs[0].set_xscale('log')
+    axs[0].set_ylabel(r"Real($\alpha$)")
+    axs[0].grid()
+    axs[0].legend()
+    axs[1].plot(freq,np.imag(th),c='black',label="Reference")
+    axs[1].plot(freq,np.imag(optim_val),'r--',label="Optimized")
+    axs[1].set_xscale('log')
+    axs[1].set_xlabel('Frequency [Hz]')
+    axs[1].set_ylabel(r"Imag($\alpha$)")
+    axs[1].grid()
+    axs[1].legend()
 

@@ -15,8 +15,11 @@ from MM.error import error_a_opti as error
 #from MM.error import error_b_opti as error
 
 # Figures modules
-from MM.display import main_plot_history, main_plot_histogram, main_plot_vars, main_plot_Bode_a
+from MM.display import main_plot_history, main_plot_histogram, main_plot_vars
 from MM.display import main_plot_Bode_a as main_plot_Bode
+from MM.display import main_plot_a as main_plot
+#from MM.display import main_plot_Bode_b as main_plot_Bode
+#from MM.display import main_plot_b as main_plot
 
 
 def get_search_space(f_min=1e-4, f_max=1e4, Ns=10):
@@ -73,7 +76,9 @@ def optimize(f_opti, space, max_evals=100, case=0, f_min=1e-4, f_max=1e4,
 
     # Get model parameters
     M, N, L, Mp, Np, Lp, ainf, gam = init(case=case)
-    param_th = [ainf, M, N, L]
+    param_th_a = [ainf, M, N, L]
+    param_th_b = [gam, Mp, Np, Lp]
+    param_th = param_th_a  #TODO!
 
     # range of frequencies
     freq = np.logspace(np.log10(f_min), np.log10(f_max), Nf)
@@ -113,7 +118,7 @@ if __name__ == "__main__":
     f_min, f_max = [1e1,1e7]
 
     # Number of iterrations
-    max_evals = 5e3
+    max_evals = 1e4
 
     # Logs
     print("", '#'*80, '#{:^78}#'.format("Starting"), '#'*80, "", sep='\n')
@@ -162,6 +167,9 @@ if __name__ == "__main__":
     M, N, L, Mp, Np, Lp, ainf, gam = init(case=0)
     phy_param_a = [ainf, M, N, L]
     phy_param_b = [gam, Mp, Np, Lp]
+    phy_param = phy_param_a #TODO!
+
     mm_param = [rk,sk]
     fr_param = [f_min,f_max, Nf]
-    main_plot_Bode(mm_param, phy_param_a, fr_param)
+    main_plot(mm_param, phy_param, fr_param)
+    main_plot_Bode(mm_param, phy_param, fr_param)
