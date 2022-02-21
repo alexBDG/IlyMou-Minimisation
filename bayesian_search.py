@@ -7,7 +7,7 @@ import numpy as np
 
 # Optimization module
 from hyperopt import fmin, tpe, Trials, space_eval, STATUS_OK, STATUS_FAIL, hp
-from hyperopt.pyll import scope
+#from hyperopt.pyll import scope
 
 # OD modules
 from MM.init_param import init
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     f_min, f_max = [1e1,1e7]
 
     # Number of iterrations
-    max_evals = 1e4
+    max_evals = 2e4
 
     # Logs
     print("", '#'*80, '#{:^78}#'.format("Starting"), '#'*80, "", sep='\n')
